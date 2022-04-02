@@ -25,4 +25,6 @@ module.exports = function(app) {
     [authJwt.verifyToken, authJwt.isAdmin],
     controller.adminBoard
   );
+
+  app.get("/api/v1/get/username", [authJwt.verifyToken], controller.getUsername)
 };

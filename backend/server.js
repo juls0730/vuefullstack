@@ -8,7 +8,7 @@ var corsOptions = {
   origin: "http://localhost:8081",
   credentials: true,
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-  exposedHeaders: ['x-auth-token'],
+  exposedHeaders: ['X-ACCESS-TOKEN'],
   sameSite: 'lax',
   credentials: true
 };
