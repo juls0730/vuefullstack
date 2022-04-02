@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>Register</h2>
+    <h2>Login</h2>
     <form @submit.prevent="onSubmit">
       <input
         type="text"
@@ -21,9 +21,10 @@
 </template>
 
 <script>
+import { useCookies } from "vue3-cookies";
 import axios from "axios";
 export default {
-  name: "Register",
+  name: "Login",
   data() {
     return {
       password: "",
@@ -32,6 +33,11 @@ export default {
       errorMsg: ``,
     };
   },
+  setup() {
+    const { cookies } = useCookies();
+    return { cookies };
+  },
+
   methods: {
     async onSubmit(e) {
       try {
@@ -41,11 +47,23 @@ export default {
           this.errorMsg = `Please enter a username and password`;
           return;
         }
-        await axios.create({ withCredentials: true }).post(`http://localhost:8080/api/v1/auth/signup`, {
+          axios.create({ withCredentials: true }).post(`http://localhost:8080/api/v1/auth/signin`, {
             password: this.password,
             username: this.username,
-          });
-        this.$router.push({name: 'Login'});
+          })
+        .then(response => {
+            this.cookies.set('token',response.data.accessToken);
+            console.log(axios.defaults.headers.common['X-ACCESS-TOKEN'])
+            console.log('-------Start Response-------')
+            console.log(response)
+            console.log(res.data.accessToken)
+            console.log(response.data)
+            console.log(this.cookies.get('token'))
+            console.log('--------End Response--------')
+            this.$router.push({name: 'Home'});
+        })
+        .catch(error => error);
+        this.$router.push({name: 'Home'});
       } catch (e) {
         this.error = true;
         this.password = "";
