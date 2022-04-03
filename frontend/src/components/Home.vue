@@ -21,7 +21,7 @@ export default {
 
   
   mounted() {
-    if (this.cookies.get('token') !== undefined) {
+    if (this.cookies.get('token') !== null) {
 axios.create({ withCredentials: true }).get('http://localhost:8080/api/v1/get/username', {
     'headers': { 'x-access-token': this.cookies.get('token') }
 }).then((response) => {
@@ -30,6 +30,8 @@ axios.create({ withCredentials: true }).get('http://localhost:8080/api/v1/get/us
     }, (err) => {
       console.log(err)
     })
+} else {
+  this.name = 'User';
 }
   }
 }

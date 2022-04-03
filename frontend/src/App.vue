@@ -33,11 +33,12 @@ export default {
   },
 
   mounted() {
+    console.log('token cookie = ' + this.cookies.get('token'))
     window.addEventListener('hashchange', () => {
 		  this.currentPath = window.location.hash
 		})
 
-    if (this.cookies.get('token') !== undefined) {
+    if (this.cookies.get('token') !== null) {
       axios.create({ withCredentials: true }).get('http://localhost:8080/api/v1/test/user', {
         'headers': { 'x-access-token': this.cookies.get('token') }
       }).then((response) => {
@@ -78,6 +79,8 @@ export default {
 </template>
 
 <style>
+@import './assets/base.css';
+
 body {
   background-color: #f2f2f2;
 }
