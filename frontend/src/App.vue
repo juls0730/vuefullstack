@@ -1,24 +1,21 @@
 <script>
-import Home from './components/Home.vue'
-import Register from './components/Register.vue'
-import Login from './components/Login.vue'
-const routes = {
-  '/': Home,
-  '/register': Register,
-  '/login': Login
-}
-
+import Nav from "./components/Nav.vue";
 import { useCookies } from "vue3-cookies";
-import axios from 'axios';
+import axios from "axios";
 
 export default {
   data() {
     return {
       data: [],
       errors: [],
-      userauth: '',
-      currentPath: window.location.hash
-    }
+      userauth: "",
+      signedIn: false,
+      neednewtoken: false,
+    };
+  },
+
+  components: {
+    Nav,
   },
 
   setup() {
@@ -26,62 +23,101 @@ export default {
     return { cookies };
   },
 
-  computed: {
-    currentView() {
-      return routes[this.currentPath.slice(1) || '/'] || NotFound
-    }
-  },
-
   mounted() {
-    console.log('token cookie = ' + this.cookies.get('token'))
-    window.addEventListener('hashchange', () => {
-		  this.currentPath = window.location.hash
-		})
-
-    if (this.cookies.get('token') !== null) {
-      axios.create({ withCredentials: true }).get('http://localhost:8080/api/v1/test/user', {
-        'headers': { 'x-access-token': this.cookies.get('token') }
-      }).then((response) => {
-        console.log(response.data)
-        this.userauth = response.data
-      }, (err) => {
-        console.log(err)
-      })
+    if (localStorage.getItem("theme") == null) {
+      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        localStorage.setItem("theme", "dark");
+        document.documentElement.setAttribute(
+          "data-theme",
+          localStorage.getItem("theme")
+        );
+      } else {
+        localStorage.setItem("theme", "light");
+        document.documentElement.setAttribute(
+          "data-theme",
+          localStorage.getItem("theme")
+        );
+      }
     } else {
-      this.userauth = 'all'
+      document.documentElement.setAttribute(
+        "data-theme",
+        localStorage.getItem("theme")
+      );
     }
+    if (this.cookies.get("token") !== null) {
+      axios
+        .create({ withCredentials: true })
+        .get("http://localhost:8080/api/v1/test/user", {
+          headers: { "x-access-token": this.cookies.get("token") },
+        })
+        .then(
+          (response) => {
+            this.userauth = response.data;
+          },
+          (err) => {
+            console.log(err);
+          }
+        );
 
-    if (this.userauth !== 'all') {
-      document.getElementById('notsigned').style= 'display: none;'
+      axios
+        .create({ withCredentials: true })
+        .get("http://localhost:8080/api/v1/auth/testtoken", {
+          headers: { "x-access-token": this.cookies.get("token") },
+        })
+        .then(
+          (response) => {
+            let validToken = response.data.message;
+            if (validToken !== "Token is valid.") {
+              document.getElementById("logged-in").style.display = "none";
+            }
+          },
+          (err) => {
+            axios.defaults.headers.common["x-access-token"] =
+              this.cookies.get("token");
+            axios
+              .create({ withCredentials: true })
+              .post("http://localhost:8080/api/v1/auth/refreshtoken", {
+                refreshToken: this.cookies.get("refreshToken"),
+              })
+              .then(
+                (response) => {
+                  this.cookies.set("token", response.data.accessToken);
+                  this.$router.go(0);
+                },
+                (err) => {
+                  console.log(err);
+                }
+              );
+          }
+        );
+    } else {
     }
   },
 
   // Fetches data when the component is created.
   created() {
     // Generate a CSRF token.
-    axios.create({withCredentials: true}).get('http://localhost:8080/api/v1/getcsrftoken').then((response) => {
-      axios.defaults.headers.common['X-CSRF-TOKEN'] = response.data.csrfToken
-    }, (err) => {
-      console.log(err)
-    })
-  }
-}
+    axios
+      .create({ withCredentials: true })
+      .get("http://localhost:8080/api/v1/getcsrftoken")
+      .then(
+        (response) => {
+          axios.defaults.headers.common["X-CSRF-TOKEN"] =
+            response.data.csrfToken;
+        },
+        (err) => {
+          console.log(err);
+        }
+      );
+  },
+};
 </script>
 
 <template>
-  <a href="#/">Home</a>
-  <div id="notsigned">
-    |
-    <a href="#/register">Register</a> |
-    <a href="#/login">Login</a>
-  </div>
-  <component :is="currentView" />
+  <Nav />
+  <router-view />
 </template>
 
 <style>
-@import './assets/base.css';
-
-body {
-  background-color: #f2f2f2;
-}
+@import "./assets/base.css";
 </style>

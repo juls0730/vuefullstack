@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 var cookieParser = require('cookie-parser')
+var compression = require('compression')
+var http = require('http')
+var https = require('https')
 const app = express();
 app.use(cookieParser())
 
@@ -13,18 +16,25 @@ var corsOptions = {
   credentials: true
 };
 
+http.globalAgent.maxSockets = Infinity;
+https.globalAgent.maxSockets = Infinity;
+
 app.use(cors(corsOptions));
+app.set('view cache', true);
 
 // parse requests of content-type - application/json
-app.use(express.json());
+app.use(express.json({limit: '50mb'}));
 
 // parse requests of content-type - application/x-www-form-urlencoded
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Add middleware
 var csrf = require('csurf')
 var csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
+
+// Reduce the download size of the client by compressing all responses
+app.use(compression());
 
 const db = require("./app/models");
 const Role = db.role;
@@ -81,11 +91,12 @@ app.get('/api/v1/getcsrftoken', function (req, res) {
 // simple route
 app.get("/", (req, res) => {
   res.json({ message: "Hello :)" });
-  console.log(req.csrfToken())
 });
 
 require("./app/routes/user.route")(app);
 require('./app/routes/auth.routes')(app);
+require('./app/routes/post.routes')(app);
+require('./app/routes/reply.routes')(app);
 
 initial();
 

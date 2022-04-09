@@ -17,13 +17,25 @@ exports.moderatorBoard = (req, res) => {
   res.status(200).send("Moderator Content.");
 };
 
-exports.getUsername = (req, res) => {
-  User.findById(req.userId).exec((err, user) => {
+exports.getUserInfo = (req, res) => {
+  User.findById({ _id: req.userId}, '-password -roles').exec((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
       return;
     }
 
-    res.status(200).send({ username: user.username })
+    res.status(200).send({ user });
   });
 };
+
+exports.findOne = (req, res) => {
+  const id = req.params.id;
+  User.findById({ _id: id}, '-password').exec((err, user) => {
+    if (err) {
+      res.status(500).send({ message: err });
+      return;
+    }
+
+    res.status(200).send({ user });
+  });
+}

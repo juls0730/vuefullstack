@@ -1,7 +1,6 @@
 const config = require("../config/auth.config");
 const db = require("../models");
-const User = db.user;
-const Role = db.role;
+const { user: User, role: Role, refreshToken: RefreshToken } = db;
 
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
@@ -66,7 +65,7 @@ exports.signin = (req, res) => {
     username: req.body.username
   })
     .populate("roles", "-__v")
-    .exec((err, user) => {
+    .exec(async (err, user) => {
       if (err) {
         res.status(500).send({ message: err });
         return;
@@ -89,19 +88,69 @@ exports.signin = (req, res) => {
       }
 
       var token = jwt.sign({ id: user.id }, config.secret, {
-        expiresIn: 86400 // 24 hours
+        expiresIn: config.jwtExpiration // 24 hours
       });
 
+      let refreshToken = await RefreshToken.createToken(user);
       var authorities = [];
-
       for (let i = 0; i < user.roles.length; i++) {
         authorities.push("ROLE_" + user.roles[i].name.toUpperCase());
       }
+
       res.status(200).send({
         id: user._id,
         username: user.username,
         roles: authorities,
-        accessToken: token
+        accessToken: token,
+        refreshToken: refreshToken
       });
     });
 };
+
+exports.refreshToken = async (req, res) => {
+  const { refreshToken: requestToken } = req.body;
+  if (requestToken == null) {
+    return res.status(403).json({ message: "Refresh Token is required!" });
+  }
+  try {
+    let refreshToken = await RefreshToken.findOne({ token: requestToken });
+    if (!refreshToken) {
+      res.status(403).json({ message: "Refresh token is not in database!" });
+      return;
+    }
+    if (RefreshToken.verifyExpiration(refreshToken)) {
+      RefreshToken.findByIdAndRemove(refreshToken._id, { useFindAndModify: false }).exec();
+      
+      res.status(403).json({
+        message: "Refresh token was expired. Please make a new signin request",
+      });
+      return;
+    }
+    let newAccessToken = jwt.sign({ id: refreshToken.user._id }, config.secret, {
+      expiresIn: config.jwtExpiration,
+    });
+    return res.status(200).json({
+      accessToken: newAccessToken,
+      refreshToken: refreshToken.token,
+    });
+  } catch (err) {
+    return res.status(500).send({ message: err });
+  }
+};
+
+exports.testToken = (req, res) => {
+  var token = req.headers["x-access-token"];
+  if (!token)
+    return res.status(401).send({ auth: false, message: "No token provided." });
+
+  jwt.verify(token, config.secret, function(err, decoded) {
+    if (err)
+      return res.status(500).send({
+        message: "Token is invalid!"
+      });
+
+    res.status(200).send({
+      message: "Token is valid."
+    });
+  });
+}

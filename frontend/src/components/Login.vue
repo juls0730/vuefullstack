@@ -53,10 +53,11 @@ export default {
           })
         .then(response => {
             this.cookies.set('token',response.data.accessToken);
-            console.log(axios.defaults.headers.common['X-ACCESS-TOKEN'])
+            this.cookies.set('refreshToken',response.data.refreshToken);
             console.log('-------Start Response-------')
             console.log(response)
             console.log(res.data.accessToken)
+            console.log(res.data.refreshToken)
             console.log(response.data)
             console.log(this.cookies.get('token'))
             console.log('--------End Response--------')
