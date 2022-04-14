@@ -17,8 +17,10 @@ module.exports = function(app) {
     ],
     controller.signup
   );
+  app.post("/api/v1/auth/change-password", [authJwt.verifyToken], controller.changePassword);
   app.post("/api/v1/auth/signin", controller.signin);
   app.post("/api/v1/auth/refreshtoken", controller.refreshToken);
+  app.post("/api/v1/auth/logout", controller.logout);
 
   app.get('/api/v1/auth/testtoken', [authJwt.verifyToken], controller.testToken)
 };

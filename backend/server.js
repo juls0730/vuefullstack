@@ -4,6 +4,7 @@ var cookieParser = require('cookie-parser')
 var compression = require('compression')
 var http = require('http')
 var https = require('https')
+const helmet = require("helmet");
 const app = express();
 app.use(cookieParser())
 
@@ -16,8 +17,12 @@ var corsOptions = {
   credentials: true
 };
 
-http.globalAgent.maxSockets = Infinity;
-https.globalAgent.maxSockets = Infinity;
+var http = require("http").Server(app)
+var io = require("socket.io")(http, {
+  cors: {
+    origin: "http://localhost:8081",
+  }
+})
 
 app.use(cors(corsOptions));
 app.set('view cache', true);
@@ -29,12 +34,15 @@ app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Add middleware
+/*
 var csrf = require('csurf')
 var csrfProtection = csrf({ cookie: true });
 app.use(csrfProtection);
+*/
 
 // Reduce the download size of the client by compressing all responses
 app.use(compression());
+app.use(helmet());
 
 const db = require("./app/models");
 const Role = db.role;
@@ -83,10 +91,12 @@ function initial() {
   });
 }
 
+/*
 // Send CSRF token as a cookie
 app.get('/api/v1/getcsrftoken', function (req, res) {
   return res.json({ csrfToken: req.csrfToken() });
 });
+*/
 
 // simple route
 app.get("/", (req, res) => {
@@ -97,11 +107,13 @@ require("./app/routes/user.route")(app);
 require('./app/routes/auth.routes')(app);
 require('./app/routes/post.routes')(app);
 require('./app/routes/reply.routes')(app);
+require('./app/routes/conversation.routes')(app);
+require('./app/websockets/conversation.routes')(io);
 
 initial();
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+http.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });

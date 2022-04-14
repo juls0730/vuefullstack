@@ -4,7 +4,6 @@ const User = db.user;
 
 checkDuplicate = (req, res, next) => {
   // Username
-  console.log(req.body.username)
   User.findOne({
     username: req.body.username
   }).exec((err, user) => {

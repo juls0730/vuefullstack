@@ -1,3 +1,8 @@
+<template>
+  <Nav />
+  <router-view class="main-content" />
+</template>
+
 <script>
 import Nav from "./components/Nav.vue";
 import { useCookies } from "vue3-cookies";
@@ -44,6 +49,24 @@ export default {
         localStorage.getItem("theme")
       );
     }
+
+    // Generate a CSRF token.
+    /*
+    axios
+      .create({ withCredentials: true })
+      .get("http://localhost:8080/api/v1/getcsrftoken")
+      .then(
+        (response) => {
+          axios.defaults.headers.common["X-CSRF-TOKEN"] =
+            response.data.csrfToken;
+          this.cookies.set("_csrf", response.data.csrfToken);
+        },
+        (err) => {
+          console.log(err);
+        }
+      );
+      */
+
     if (this.cookies.get("token") !== null) {
       axios
         .create({ withCredentials: true })
@@ -93,30 +116,8 @@ export default {
     } else {
     }
   },
-
-  // Fetches data when the component is created.
-  created() {
-    // Generate a CSRF token.
-    axios
-      .create({ withCredentials: true })
-      .get("http://localhost:8080/api/v1/getcsrftoken")
-      .then(
-        (response) => {
-          axios.defaults.headers.common["X-CSRF-TOKEN"] =
-            response.data.csrfToken;
-        },
-        (err) => {
-          console.log(err);
-        }
-      );
-  },
 };
 </script>
-
-<template>
-  <Nav />
-  <router-view />
-</template>
 
 <style>
 @import "./assets/base.css";

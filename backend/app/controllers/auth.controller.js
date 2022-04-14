@@ -1,9 +1,11 @@
 const config = require("../config/auth.config");
 const db = require("../models");
+var speakeasy = require('speakeasy');
 const { user: User, role: Role, refreshToken: RefreshToken } = db;
 
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
+const { authJwt } = require("../middlewares");
 
 exports.signup = (req, res) => {
   const user = new User({
@@ -152,5 +154,43 @@ exports.testToken = (req, res) => {
     res.status(200).send({
       message: "Token is valid."
     });
+  });
+}
+
+exports.changePassword = (req, res) => {
+  if (!req.body.password) {
+    return res.status(400).send({ message: "Password field cannot be empty" });
+  }
+
+  if(!req.headers["x-access-token"]) {
+    return res.status(401).send({ message: "No token provided." });
+  }
+
+  User.updateOne({id: req.userId }, { 
+    password: bcrypt.hashSync(req.body.password, 8) 
+  }, (err, user) => {
+    if (err) {
+      res.status(500).send({ message: err });
+      return;
+    }
+
+    res.send({ message: "Password was changed successfully!" });
+  });
+}
+
+exports.logout = (req, res) => {
+  RefreshToken.findOne({ token: req.body.refreshToken }, (err, refreshToken) => {
+    if (err) {
+      res.status(500).send({ message: err });
+      return;
+    }
+
+    if (!refreshToken) {
+      res.status(404).send({ message: "Refresh token was not found!" });
+      return;
+    }
+
+    RefreshToken.findByIdAndRemove(refreshToken._id, { useFindAndModify: false }).exec();
+    res.send({ message: "Logout successfully!" });
   });
 }

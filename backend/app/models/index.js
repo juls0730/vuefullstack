@@ -10,4 +10,6 @@ db.refreshToken = require("./refreshtoken.model");
 db.ROLES = ["user", "admin", "moderator"];
 db.posts = require("./post.model");
 db.replies = require("./reply.model");
+db.conversations = require("./conversation.model");
+db.messages = require("./message.model");
 module.exports = db;
