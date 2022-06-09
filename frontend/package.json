@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@vue/runtime-dom": "^3.2.31",
-    "@vue/server-renderer": "^3.2.31",
+    "@vue/server-renderer": "^3.2.34",
     "@vueuse/head": "^0.7.5",
     "axios": "^0.26.1",
     "socket.io": "^4.4.1",
