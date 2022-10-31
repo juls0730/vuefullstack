@@ -13,7 +13,7 @@
     "@vueuse/head": "^0.7.5",
     "axios": "^0.26.1",
     "socket.io": "^4.4.1",
-    "socket.io-client": "^4.4.1",
+    "socket.io-client": "^4.5.0",
     "vite-ssr": "^0.15.0",
     "vue": "^3.2.31",
     "vue-cookie": "^1.1.4",
